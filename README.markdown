@@ -19,6 +19,8 @@ Ubuntu's `notify-send`.
 
 Put it in your startup applications!
 
+[alpine]: http://www.washington.edu/alpine/
+
 EXTRAS
 ------
 
