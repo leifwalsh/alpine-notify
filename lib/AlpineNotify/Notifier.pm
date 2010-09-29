@@ -13,7 +13,7 @@ AlpineNotify::Notifier - Register a notification for alpine.
 
 =head1 SYNOPSIS
 
-    use AlpineNotify::Notifier qw(register;
+    use AlpineNotify::Notifier qw(register);
     
     sub myfn($$$) {
       my ($from, $subject, $folder) = @_;
@@ -24,7 +24,7 @@ AlpineNotify::Notifier - Register a notification for alpine.
 
 =head1 DESCRIPTION
 
-Watches the alpine fifo (defaults to /tmp/alpine-fifo) for data from alpine
+Watches the alpine fifo (defaults to F</tmp/alpine-fifo>) for data from alpine
 regarding new mail.  You provide a callback that does something with the From
 and Subject headers, and the folder it came in to.
 
