@@ -104,21 +104,21 @@ sub open_fifo($$) {
   } else {
     dbg("setting a watch on $ALPINE_FIFO_DIR");
     my $watch = $ino->watch($ALPINE_FIFO_DIR, IN_CREATE, sub {
-                           &tr_enter;
+                              &tr_enter;
 
-                           dbg("got an event");
-                           my ($e) = @_;
-                           if ($e->IN_CREATE and
-                               $e->name eq $ALPINE_FIFO_NAME) {
-                             dbg("got the right event");
-                             $e->w->cancel();
-                             $cb->(just_open(), @args);
-                           } elsif ($e->IN_UNMOUNT or $e->IN_IGNORED) {
-                             $e->w->cancel();
-                           }
+                              dbg("got an event");
+                              my ($e) = @_;
+                              if ($e->IN_CREATE and
+                                  $e->name eq $ALPINE_FIFO_NAME) {
+                                dbg("got the right event");
+                                $e->w->cancel();
+                                $cb->(just_open(), @args);
+                              } elsif ($e->IN_UNMOUNT or $e->IN_IGNORED) {
+                                $e->w->cancel();
+                              }
 
-                           tr_exit;
-                         })
+                              tr_exit;
+                            })
       or die "couldn't set a watch on $ALPINE_FIFO_DIR: $!";
     1 while $ino->poll();
   }
