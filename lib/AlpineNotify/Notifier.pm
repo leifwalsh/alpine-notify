@@ -151,8 +151,9 @@ sub write_field_widths($$$$$$) {
 sub read_field_widths() {
   &tr_enter;
 
-  die "no configuration, you must kill alpine and restart the notifier before" .
-    "you restart alpine" unless -f "/tmp/AlpineNotify_Notifier_config.dump";
+  die "no saved field widths, you must kill alpine and restart the notifier " .
+    "before you restart alpine"
+      unless -f "/tmp/AlpineNotify_Notifier_config.dump";
 
   my ($frompos, $fromlength,
       $subjectpos, $subjectlength,
