@@ -21,6 +21,10 @@ Ubuntu's `notify-send`.
 
 Put it in your startup applications!
 
+Oh, and you'll have to make sure your alpine config is set to use a fifo, and it
+points to the same thing that `alpine-notify.pl` points to.  Default is
+`/tmp/alpine-fifo`.
+
 [alpine]: http://www.washington.edu/alpine/
 
 EXTRAS
