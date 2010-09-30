@@ -4,10 +4,12 @@ alpine-notify
 USAGE
 -----
 
+    % [sudo] cpan Linux::Inotify2
+    % cd ~/git
     % git clone git://github.com/adlaiff6/alpine-notify.git
     % git clone git://github.com/adlaiff6/funperl.git
     % cd alpine-notify
-    % perl -I./lib -I../funperl/lib alpine-notify.pl &
+    % ./alpine-notify.sh &
     % cd ; alpine
 
 DESCRIPTION
@@ -24,23 +26,29 @@ Put it in your startup applications!
 EXTRAS
 ------
 
+You should modify `alpine-notify.sh` to suit your environment (namely, point the
+include directories to your copies of my git repositories), or, optionally, send
+someone to tell me how to put my code on CPAN.
+
 If you want to see debugging info, try `-D|--debug` or `-T|--trace`.
-
-CAVEATS
--------
-
-You should never start `alpine-notify.pl` after alpine has already started.
-There are cases where this is okay, but in general, if you need to start the
-notifier, kill alpine first, start it, then restart alpine.  See the
-documentation for `AlpineNotify::Notifier` for the explanation why this is.
-
-However, you can totally restart alpine as much as you want while this is
-running, it'll handle that just fine.
 
 BUGS
 ----
 
-Yeah, probably.  Fork me.
+If you start alpine-notify, then start alpine, but receive no new mail before
+you close alpine, and then start alpine again before restarting alpine-notify,
+you won't receive new notifications for that session.  The technical reason for
+this is discussed in the code, and it is fixable, I just need to take some time
+to do it right.
+
+However, as long as you receive at least one new mail in each alpine session,
+alpine-notify can stay running as long as you want behind all of alpine's quits
+and restarts.
+
+TODO
+----
+
+Fix bugs.  Fork me.
 
 AUTHORS
 -------

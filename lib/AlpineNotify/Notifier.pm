@@ -40,6 +40,7 @@ BEGIN {
   @EXPORT_OK = qw(register);
 }
 
+use Data::Dumper;
 use File::Spec qw(catfile);
 use Linux::Inotify2;
 
@@ -125,6 +126,76 @@ sub open_fifo($$) {
   tr_exit;
 }
 
+sub write_field_widths($$$$$$) {
+  &tr_enter;
+
+  my ($frompos, $fromlength,
+      $subjectpos, $subjectlength,
+      $folderpos, $folderlength) = @_;
+
+  open my $fh, ">", "/tmp/AlpineNotify_Notifier_config.dump"
+    or die "couldn't open /tmp/AlpineNotify_Notifier_config.dump: $!";
+  print $fh Data::Dumper->Dump([$frompos, $fromlength,
+                                $subjectpos, $subjectlength,
+                                $folderpos, $folderlength],
+                               [qw(frompos fromlength
+                                   subjectpos subjectlength
+                                   folderpos folderlength)]);
+  close $fh
+    or die "couldn't close /tmp/AlpineNotify_Notifier_config.dump: $!";
+  dbg("wrote new field widths to /tmp/AlpineNotify_Notifier_config.dump");
+
+  tr_exit;
+}
+
+sub read_field_widths() {
+  &tr_enter;
+
+  die "no configuration, you must kill alpine and restart the notifier before" .
+    "you restart alpine" unless -f "/tmp/AlpineNotify_Notifier_config.dump";
+
+  my ($frompos, $fromlength,
+      $subjectpos, $subjectlength,
+      $folderpos, $folderlength);
+  my $data = do {
+    local (@ARGV, $/) = "/tmp/AlpineNotify_Notifier_config.dump";
+    <>
+  };
+  eval($data);
+  dbg("read old field widths from temp file");
+
+  tr_exit($frompos, $fromlength,
+          $subjectpos, $subjectlength,
+          $folderpos, $folderlength);
+}
+
+sub calculate_field_widths($) {
+  &tr_enter;
+
+  my ($line) = @_;
+
+  my ($frompos, $fromlength,
+      $subjectpos, $subjectlength,
+      $folderpos, $folderlength);
+  if ($line =~ m/^(((\s+)(From:\s+))(Subject:\s+))(Folder:\s*)$/) {
+    dbg("reading field widths from input");
+    $frompos = length($3);
+    $fromlength = length($4);
+    $subjectpos = length($2);
+    $subjectlength = length($5);
+    $folderpos = length($1);
+    $folderlength = length($6);
+  }
+
+  write_field_widths($frompos, $fromlength,
+                     $subjectpos, $subjectlength,
+                     $folderpos, $folderlength);
+
+  tr_exit($frompos, $fromlength,
+          $subjectpos, $subjectlength,
+          $folderpos, $folderlength);
+}
+
 sub handle_fifo($$) {
   &tr_enter;
 
@@ -142,14 +213,15 @@ sub handle_fifo($$) {
     next if (m/^New Mail window started at/ or
              m/^-+$/);
     if (m/^(((\s+)(From:\s+))(Subject:\s+))(Folder:\s*)$/) {
-      dbg("reading positions");
-      $frompos = length($3);
-      $fromlength = length($4);
-      $subjectpos = length($2);
-      $subjectlength = length($5);
-      $folderpos = length($1);
-      $folderlength = length($6);
+      ($frompos, $fromlength,
+       $subjectpos, $subjectlength,
+       $folderpos, $folderlength) = calculate_field_widths($_);
     } else {
+      unless (defined($frompos)) {
+        ($frompos, $fromlength,
+         $subjectpos, $subjectlength,
+         $folderpos, $folderlength) = read_field_widths();
+      }
       my ($from) = ($_ =~ m/.{$frompos}(.{$fromlength})/);
       $from =~ s/\s*$//;
       my ($subject) = (m/.{$subjectpos}(.{$subjectlength})/);
@@ -177,31 +249,22 @@ sub handle_fifo($$) {
 
 __END__
 
-=head1 CAVEATS
+=head1 BUGS
 
-If you start this notifications watcher after some data has been read out of the
-fifo, it will break, because it needs to look at the headers to determine the
-width of the fields in each line.  You'll get undefined reference errors if you
-do this.
-
-To avoid this, if you for some reason need to restart the notifier, you can
-either look at the code and hard-code some field widths in (it's in the middle
-of handle_fifo if you care), or you can just kill alpine and restart it after
-you start the notifier up.
-
-In theory, this is fixable if we read the fifo text width out of the user's
-F<.pinerc>, and knew the algorithm alpine uses for calculating field widths, but
-I don't know that algorithm, so if someone does I'd love to see a patch.
+If you open alpine but receive no new mail, and then close alpine, nothing gets
+written to the FIFO, but this code doesn't realize that it got deleted, so the
+next time you fire up alpine, it'll make a new FIFO but this code will still
+have a filehandle to the wrong (nonexistent) FIFO.  This is a pretty big
+problem.
 
 =head1 TODO
 
-See the end of L<CAVEATS>.
+See L<BUGS>.
 
 =head1 DEPENDENCIES
 
 L<Funperl::Dbg>,
-L<Linux::Inotify2>,
-L<File::Spec>
+L<Linux::Inotify2>
 
 =head1 COPYRIGHT
 
