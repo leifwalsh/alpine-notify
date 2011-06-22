@@ -16,7 +16,7 @@ sub send_notification($$$) {
 }
 
 sub main() {
-  my @args = (\&send_notification);
+  my @args = ();
   for my $a (@ARGV) {
     if ($a =~ m/-D|--debug/) {
       debug(1);
@@ -31,8 +31,15 @@ sub main() {
       push @args, $a;
     }
   }
+  if (@args > 2) {
+    use File::Basename;
+    my $prog = basename($0);
+    print STDERR "Usage: $prog [/path/to/alpine-fifo-dir/ [alpine-fifo-name]]", $/;
+    exit(2);
+  }
+  my ($dir, $name) = @args;
 
-  register @args;
+  register(\&send_notification, $dir, $name);
 }
 
 main();
