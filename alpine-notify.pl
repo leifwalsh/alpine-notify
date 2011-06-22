@@ -16,15 +16,23 @@ sub send_notification($$$) {
 }
 
 sub main() {
+  my @args = (\&send_notification);
   for my $a (@ARGV) {
     if ($a =~ m/-D|--debug/) {
       debug(1);
     } elsif ($a =~ m/-T|--trace/) {
       trace(1);
+    } elsif ($a =~ m/-h|--help/) {
+      use File::Basename;
+      my $prog = basename($0);
+      print STDERR "Usage: $prog [/path/to/alpine-fifo-dir/ [alpine-fifo-name]]", $/;
+      exit(2);
+    } else {
+      push @args, $a;
     }
   }
 
-  register(\&send_notification);
+  register @args;
 }
 
 main();
